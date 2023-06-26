@@ -1,161 +1,145 @@
-var ball = document.getElementById('ball');
-var rod1 = document.getElementById('rod1');
-var rod2 = document.getElementById('rod2');
 
 
-const storeName = "PPName";
-const storeScore = "PPMaxScore";
-const rod1Name = "Rod 1/Stange Eins";
-const rod2Name = "Rod 2/Stange Zwei";
+const express = require('express');
+
+const pNum= 5555;
+
+const db = require('./config/mongoose.js');
+const Contact = require('./Models/contact');
+
+const weg = require('path');
+
+const app = express();
 
 
-let score,
-    maxScore,
-    movement,
-    rod,
-    ballSpeedX = 2,
-    ballSpeedY = 2;
+var contactList =[
+	{name: 'Avinash', 
+	phone: 111111},
+	{name:'Inder',
+	phone: 213456},
+	{name: 'Kumar',
+	phone: 9856789}
 
-let gameOn = false;
+	];
 
-let windowWidth = window.innerWidth,
-    windowHeight = window.innerHeight;
-
-
-
-(function () {
-    rod = localStorage.getItem(storeName);
-    maxScore = localStorage.getItem(storeScore);
-
-    if (rod === "null" || maxScore === "null") {
-        alert("This is the first time you are playing this game. LET'S START");
-        maxScore = 0;
-        rod = "Rod1"
-    } else {
-        alert(rod + " has maximum score of " + maxScore * 100);
-    }
-
-    resetBoard(rod);
-})();
+app.set('view engine', 'ejs');
+app.set('views', weg.join(__dirname,'view'));
+app.use(express.urlencoded());
+app.use(express.static('assets'));
 
 
+// Middle Ware 1
+app.use(function(req, res, next){
+	console.log('Middle ware 1');
+	req.myName ='Avinash';
+	next();
+});
 
-function resetBoard(rodName) {
+// Middle Ware 2
 
-    rod1.style.left = (window.innerWidth - rod1.offsetWidth) / 2 + 'px';
-    rod2.style.left = (window.innerWidth - rod2.offsetWidth) / 2 + 'px';
-    ball.style.left = (windowWidth - ball.offsetWidth) / 2 + 'px';
+app.use(function(req, res, next){
 
+	console.info('From Middle Ware 2', req.myName);
+	next();
+});
 
-    // Losing player gets the ball## Spieler, der verliert bekommt den Ball.
-    if (rodName === rod2Name) {
-        ball.style.top = (rod1.offsetTop + rod1.offsetHeight) + 'px';
-        ballSpeedY = 2;
-    } else if (rodName === rod1Name) {
-        ball.style.top = (rod2.offsetTop - rod2.offsetHeight) + 'px';
-        ballSpeedY = -2;
-    }
+app.get('/',function(req,res){
 
-    score = 0;
-    gameOn = false;
+	console.log('From Home Page Controller ', req.myName );
 
-}
+	// Contact.find({name:"New"}, function(err, contact){
 
+	// 	if(err){
+	// 		console.log('Error in fetching data from Mongo DB');
+	// 		return;
+	// 	}
+	// 	return res.render('ejsIndex', 
+	// 	{
+	// 		tit: "Aufenthalstitel-Deutschland",
+	// 		contact_List: Contact
+	// 	});
 
+	//	});
 
-function storeWin(rod, score) {
+	 Contact.find({name:"Sunday"}).then(function (contact) {
+     // console.log(contact);
+      return res.render('ejsIndex',{
+            tit : "My contact list",
+            contact_List : contact
+        })
+    })
+    .catch(function (err) {
+      console.log(err);
+    });
 
-    if (score > maxScore) {
-        maxScore = score;
-        localStorage.setItem(storeName, rod);
-        localStorage.setItem(storeScore, maxScore);
-    }
+	
 
-    clearInterval(movement);
-    resetBoard(rod);
+});
 
-    alert(rod + " wins with a score of " + (score * 100) + ". Max score is: " + 
-        (maxScore * 100));
+app.get('/practise', function(req,res){
 
-}
+	return res.render('ejsÜben',{titu:"EJS Üben"});
+});
 
+app.get('/praxis', function(req,res){
 
-
-window.addEventListener('keypress', function () {
-    let rodSpeed = 20;
-
-    let rodRect = rod1.getBoundingClientRect();
-
-
-    if (event.code === "KeyD" && ((rodRect.x + rodRect.width) < window.innerWidth)) {
-        rod1.style.left = (rodRect.x) + rodSpeed + 'px';
-        rod2.style.left = rod1.style.left;
-    } else if (event.code === "KeyA" && (rodRect.x > 0)) {
-        rod1.style.left = (rodRect.x) - rodSpeed + 'px';
-        rod2.style.left = rod1.style.left;
-    }
-
-
-    if (event.code === "Enter") {
-
-        if (!gameOn) {
-            gameOn = true;
-            let ballRect = ball.getBoundingClientRect();
-            let ballX = ballRect.x;
-            let ballY = ballRect.y;
-            let ballDia = ballRect.width;
-
-            let rod1Height = rod1.offsetHeight;
-            let rod2Height = rod2.offsetHeight;
-            let rod1Width = rod1.offsetWidth;
-            let rod2Width = rod2.offsetWidth;
+	return res.render('practise',{titu:"Let's Playaround with EJS"});
+});
 
 
-            movement = setInterval(function () {
-                // Move ball 
-                ballX += ballSpeedX;
-                ballY += ballSpeedY;
+app.post('/add-contact', function(req,res){
 
-                rod1X = rod1.getBoundingClientRect().x;
-                rod2X = rod2.getBoundingClientRect().x;
+	
+	Contact.create({
+		name: req.body.name,
+		phone: req.body.phone,
+	}).then((newContact)=>{	
+					
+		console.log('######## New Contact Created Successfully', newContact);
+		return res.redirect('back');
+	}).catch((e)=>{
+		console.log(e);
+	});
 
-                ball.style.left = ballX + 'px';
-                ball.style.top = ballY + 'px';
+	// Alternative to above code
+	//  Contact.create({
+	// 	name: req.body.name,
+	// 	phone: req.body.phone,
+	// }).then((newContact)=>{
+	// 	console.log('******** created', newContact );
+	// 	return res.redirect('/');
+	// }).catch((e)=>{
+	// 	console.log(e);	
+	// });
+	
+});
 
 
-                if ((ballX + ballDia) > windowWidth || ballX < 0) {
-                    ballSpeedX = -ballSpeedX; // Reverses the direction # Die Richtung zurückkehren
-                }
+// for deleting a contact
+app.get('/delete-contact/:phone', function(req,res){
 
-                // It specifies the center of the ball on the viewport 
-                // Es spezifiziert der mitte den Ball auf dem Viewport
-                let ballPos = ballX + ballDia / 2;
+	// get the id from the query in the url
 
-                // Check for Rod 1 ## Überprüfen für Stange Eins
-                if (ballY <= rod1Height) {
-                    ballSpeedY = -ballSpeedY; // Reverses the direction
-                    score++;
+	let id = req.query.id;
+	// find the contact in the db using object id & delete
 
-                    // Check if the game ends ## Überprüfen ob das Spiel beendet
-                    if ((ballPos < rod1X) || (ballPos > (rod1X + rod1Width))) {
-                        storeWin(rod2Name, score);
-                    }
-                }
+	Contact.findByIdAndDelete(id, function(err){
 
-                // Check for Rod 2 ## Überprüfen für Stange Zwei
-                else if ((ballY + ballDia) >= (windowHeight - rod2Height)) {
-                    ballSpeedY = -ballSpeedY; // Reverses the direction
-                    score++;
+		if(err){
+			console.info('Error in deleting the object from Mdb');
+			return;
+		}
+		return res.redirect('back');
+	});
 
-                    // Check if the game ends ## Überprüfen ob das Spiel beendet
-                    if ((ballPos < rod2X) || (ballPos > (rod2X + rod2Width))) {
-                        storeWin(rod1Name, score);
-                    }
-                }
+	
+});
 
-            }, 10);
+app.listen(pNum, function(err){
 
-        }
-    }
+	if(err){
+		console.log("Ooopy etwas schief gegangen")
+	}
 
+	console.log('Server is running at the specified RPM ', pNum);
 });

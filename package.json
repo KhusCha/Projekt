@@ -1,0 +1,21 @@
+{
+  "name": "contactlist-app",
+  "version": "1.0.0",
+  "description": "This is my First Contact List App using express.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Kontakt",
+    "Liste",
+    "App"
+  ],
+  "author": "Avinash jee computer wale",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "mongoose": "^7.3.1"
+  }
+}
